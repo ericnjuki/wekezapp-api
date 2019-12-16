@@ -5,6 +5,10 @@ VisualStudioVersion = 15.0.28307.168
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "wekezapp.core", "wekezapp.core\wekezapp.core.csproj", "{B2609E40-DF2F-4AC4-902A-CB43D2802105}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "wekezapp.business", "wekezapp.business\wekezapp.business.csproj", "{5A1BE5B0-2397-46CC-A0A9-3728FFAEFCAE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "wekezapp.data", "wekezapp.data\wekezapp.data.csproj", "{84CA4A09-4E1C-4E23-A1A1-0A75CC1A4BEB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +19,14 @@ Global
 		{B2609E40-DF2F-4AC4-902A-CB43D2802105}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B2609E40-DF2F-4AC4-902A-CB43D2802105}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B2609E40-DF2F-4AC4-902A-CB43D2802105}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5A1BE5B0-2397-46CC-A0A9-3728FFAEFCAE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5A1BE5B0-2397-46CC-A0A9-3728FFAEFCAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5A1BE5B0-2397-46CC-A0A9-3728FFAEFCAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5A1BE5B0-2397-46CC-A0A9-3728FFAEFCAE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{84CA4A09-4E1C-4E23-A1A1-0A75CC1A4BEB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{84CA4A09-4E1C-4E23-A1A1-0A75CC1A4BEB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{84CA4A09-4E1C-4E23-A1A1-0A75CC1A4BEB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{84CA4A09-4E1C-4E23-A1A1-0A75CC1A4BEB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
