@@ -9,11 +9,13 @@ namespace wekezapp.business.Contracts {
     {
         UserDto GetUserById(int userId);
 
-        UserDto GetUserByUsername(string username);
+        UserDto GetUserByEmail(string email);
 
         IEnumerable<UserDto> GetAllUsers();
 
-        void AddUser(UserDto user);
+        void AddAdmin(UserDto user);
+
+        void AddUsersBulk(ICollection<UserDto> users);
 
         void UpdateUser(UserDto user);
 

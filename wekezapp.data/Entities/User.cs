@@ -10,21 +10,15 @@ namespace wekezapp.data.Entities {
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int UserId { get; set; }
 
-        [Required]
-        [MaxLength(32)]
-        public string UserName { get; set; }
-
-        [Required]
-        public string Email { get; set; }
-
         public string FirstName { get; set; }
 
         public string SecondName { get; set; }
 
-        public float Stake { get; set; }
-
         [Required]
         public string Role { get; set; }
+
+        [Required]
+        public string Email { get; set; }
 
         [Required]
         public byte[] PasswordHash { get; set; }
@@ -34,9 +28,9 @@ namespace wekezapp.data.Entities {
 
         public string Token { get; set; }
 
+        public double Balance { get; set; }
 
-        [Required]
-        public virtual ICollection<ChamaUser> UserChamas { get; set; }
+        public double Stake { get; set; }
 
     }
 }

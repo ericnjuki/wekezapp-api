@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -37,14 +38,13 @@ namespace wekezapp.core.Controllers {
             if (user == null) {
                 return NotFound();
             }
-
             return Ok(user);
         }
 
-        // GET: api/Users/janedoe
-        [HttpGet("{username}")]
-        public ActionResult<UserDto> GetUser(string username) {
-            var user = _userService.GetUserByUsername(username);
+        // GET: api/Users/jane@doe.com
+        [HttpGet("u/{email}")]
+        public ActionResult<UserDto> GetUser(string email) {
+            var user = _userService.GetUserByEmail(email);
 
             if (user == null) {
                 return NotFound();
@@ -53,11 +53,32 @@ namespace wekezapp.core.Controllers {
             return Ok(user);
         }
 
+
         [HttpPost, Route("register")]
         public IActionResult Register(UserDto user) {
             try {
-                _userService.AddUser(user);
+                _userService.AddAdmin(user);
                 return Ok("success");
+            } catch (InvalidDataException ex) {
+                // TODO: Send an object that looks like this:
+                // {statuscode, customErrorNo? (e.g. 1 means request made without password), fieldName, message}
+                return BadRequest(ex);
+            } catch (Exception ex) {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex);
+            }
+        }
+
+        [HttpPost(), Route("addBulk")]
+        public IActionResult RegisterMany(ICollection<UserDto> users) {
+            try {
+                if (users.Count == 0) {
+                    return BadRequest("No members to add!");
+                }
+
+                _userService.AddUsersBulk(users);
+                return Ok();
+            } catch (ArgumentNullException ex) {
+                return BadRequest(ex);
             } catch (Exception ex) {
                 return StatusCode(StatusCodes.Status500InternalServerError, ex);
             }
@@ -66,10 +87,10 @@ namespace wekezapp.core.Controllers {
         [HttpPost, Route("login")]
         public IActionResult Authenticate([FromBody]UserDto userDto) {
             try {
-                var user = _userService.Authenticate(userDto.UserName, userDto.Password);
+                var user = _userService.Authenticate(userDto.Email, userDto.Password);
 
                 if (user == null) {
-                    return BadRequest("Invalid Password");
+                    return BadRequest("Invalid Email or Password");
                 }
                 return Ok(user);
 

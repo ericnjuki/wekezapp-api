@@ -30,6 +30,10 @@ namespace wekezapp.core {
         public void ConfigureServices(IServiceCollection services) {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
             services.AddTransient<IUserService, UserService>();
+            services.AddTransient<IChamaService, ChamaService>();
+            services.AddTransient<IEmailService, EmailService>();
+            services.AddTransient<ILedgerService, LedgerService>();
+            services.AddTransient<IAtomicProcedures, AtomicProcedures>();
 
             // set up DB
             var connection = "Server=.;Database=Wekezapp;Integrated Security=true";
@@ -40,7 +44,8 @@ namespace wekezapp.core {
             services.AddCors(
                 options => {
                     options.AddPolicy("AllowAll",
-                        builder => {
+                        builder =>
+                        {
                             builder.AllowAnyOrigin()
                                 .AllowAnyHeader()
                                 .AllowAnyMethod();
@@ -69,6 +74,7 @@ namespace wekezapp.core {
             }
 
             app.UseHttpsRedirection();
+            app.UseCors("AllowAll");
             app.UseMvc(
             //    routes => {
             //    routes.MapRoute(
