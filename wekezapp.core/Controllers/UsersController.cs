@@ -18,10 +18,12 @@ namespace wekezapp.core.Controllers {
     public class UsersController : ControllerBase {
         private readonly WekezappContext _context;
         private readonly IUserService _userService;
+        private readonly IFlowService _flowService;
 
-        public UsersController(IUserService userService, WekezappContext context) {
+        public UsersController(IUserService userService, IFlowService flowService, WekezappContext context) {
             _context = context;
             _userService = userService;
+            _flowService = flowService;
         }
 
         // GET: api/Users
@@ -53,6 +55,25 @@ namespace wekezapp.core.Controllers {
             return Ok(user);
         }
 
+        // GET: api/Users/getFlow
+        [HttpGet("getFlow")]
+        public ActionResult<ICollection<FlowItem>> GetFlow(int userId) {
+            try {
+                return Ok(_flowService.GetFlow(userId));
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, e);
+            }
+        }
+
+        // GET: api/Users/getFlowItem
+        [HttpGet("getFlowItem")]
+        public ActionResult<ICollection<FlowItem>> GetFlowItem(int flowItemId) {
+            try {
+                return Ok(_flowService.GetFlowItem(flowItemId));
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, e);
+            }
+        }
 
         [HttpPost, Route("register")]
         public IActionResult Register(UserDto user) {

@@ -30,6 +30,7 @@ namespace wekezapp.core {
         public void ConfigureServices(IServiceCollection services) {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
             services.AddTransient<IUserService, UserService>();
+            services.AddTransient<IFlowService, FlowService>();
             services.AddTransient<IChamaService, ChamaService>();
             services.AddTransient<IEmailService, EmailService>();
             services.AddTransient<ILedgerService, LedgerService>();

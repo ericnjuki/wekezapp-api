@@ -15,10 +15,12 @@ namespace wekezapp.business.Services {
     public class LedgerService : ILedgerService {
         private readonly WekezappContext _ctx;
         private readonly IMapper _mapper;
+        private readonly IFlowService _flowService;
         //private readonly AtomicProcedures _atoms;
-        public LedgerService(WekezappContext ctx, IMapper mapper) {
+        public LedgerService(WekezappContext ctx, IMapper mapper, IFlowService flowService) {
             _ctx = ctx;
             _mapper = mapper;
+            _flowService = flowService;
             //_atoms = atoms;
         }
         public void RequestDepositToPersonal(PersonalDeposit transac) {
@@ -26,6 +28,14 @@ namespace wekezapp.business.Services {
             _ctx.PersonalDeposits.Add(transac);
             _ctx.SaveChanges();
 
+            _flowService
+                .AddFlowItem("PersonalDepositAsDepositor",
+                    new string[] { transac.DepositorId.ToString() },
+                    transac.TransactionId);
+            _flowService
+                .AddFlowItem("PersonalDepositAsAdmin",
+                    _ctx.Users.Where(u => u.Role == Role.Admin).Select(u => u.UserId.ToString()).ToArray(),
+                    transac.TransactionId);
         }
 
         public void ConfirmDepositToPersonal(int transactionId, int confirmedById) {

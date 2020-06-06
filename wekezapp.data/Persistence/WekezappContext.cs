@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using wekezapp.data.Entities;
@@ -15,9 +16,7 @@ namespace wekezapp.data.Persistence {
 
         public DbSet<Chama> Chamas { get; set; }
 
-        //public DbSet<FlowItem> FlowItems { get; set; }
-
-        //public DbSet<Transaction> Ledger { get; set; }
+        public DbSet<FlowItem> FlowItems { get; set; }
 
         public DbSet<Loan> Loans { get; set; }
 
@@ -46,6 +45,18 @@ namespace wekezapp.data.Persistence {
 
             modelBuilder.Entity<Chama>()
                 .Property(e => e.MgrOrder)
+                .HasConversion(
+                    v => string.Join(',', v),
+                    v => v.Split(',', StringSplitOptions.RemoveEmptyEntries));
+
+            modelBuilder.Entity<FlowItem>()
+                .Property(e => e.CanBeSeenBy)
+                .HasConversion(
+                    v => string.Join(',', v),
+                    v => v.Split(',', StringSplitOptions.RemoveEmptyEntries));
+
+            modelBuilder.Entity<FlowItem>()
+                .Property(e => e.HasBeenSeenBy)
                 .HasConversion(
                     v => string.Join(',', v),
                     v => v.Split(',', StringSplitOptions.RemoveEmptyEntries));

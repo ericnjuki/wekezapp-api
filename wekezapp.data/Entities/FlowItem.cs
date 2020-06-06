@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Text;
 
 namespace wekezapp.data.Entities {
     public class FlowItem {
-        public int ItemId { get; set; }
+        [Key]
+        public int FlowItemId { get; set; }
 
-        public string  Body { get; set; }
+        public string Body { get; set; }
 
         public DateTime DateCreated { get; set; }
 
@@ -16,9 +18,9 @@ namespace wekezapp.data.Entities {
 
         public int TransactionId { get; set; }
 
-        public ICollection<int> CanBeSeenBy { get; set; }
+        public string[] CanBeSeenBy { get; set; }
 
-        public ICollection<int> HasBeenSeenBy { get; set; }
+        public string[] HasBeenSeenBy { get; set; }
 
     }
 }

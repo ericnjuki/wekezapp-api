@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using wekezapp.business.Contracts;
 using wekezapp.data.Entities;
 using wekezapp.data.Persistence;
@@ -15,36 +16,39 @@ namespace wekezapp.business.Services {
             _ctx = shopAssist2Context;
             _mapper = mapper;
         }
-        public void AddFlowItem(string body, ICollection<int> canBeSeenBy = null, bool isConfirmable = false, int transactionId = -1) {
-            if (canBeSeenBy == null)
-                canBeSeenBy = _ctx.Users.Select(u => u.UserId).ToList();
 
-            var chamaCreatedNotif = new FlowItem() {
+        public FlowItem GetFlowItem(int flowItemId) {
+            return _ctx.FlowItems.Find(flowItemId);
+        }
+
+        public void AddFlowItem(string body, string[] canBeSeenBy = null, int transactionId = -1) {
+            if (canBeSeenBy == null)
+                canBeSeenBy = _ctx.Users.Select(u => u.UserId.ToString()).ToArray();
+
+            var flowItem = new FlowItem() {
                 Body = body,
-                DateCreated = DateTime.UtcNow,
+                DateCreated = DateTime.Now,
                 CanBeSeenBy = canBeSeenBy,
-                HasBeenSeenBy = null,
-                IsConfirmable = isConfirmable,
                 TransactionId = transactionId
             };
 
-            //_ctx.FlowItems.Add(chamaCreatedNotif);
-            //_ctx.SaveChanges();
+            _ctx.FlowItems.Add(flowItem);
+            _ctx.SaveChanges();
         }
 
-        //public IEnumerable<FlowItem> GetFlow(int userId) {
-        //    var userFlow = new List<FlowItem>();
-        //    foreach (var flowItem in _ctx.FlowItems) {
-        //        if (flowItem.CanBeSeenBy.Contains(userId)) {
-        //            userFlow.Add(flowItem);
-        //        }
-        //    }
-        //    return userFlow;
-        //}
+        public IEnumerable<FlowItem> GetFlow(int userId) {
+            var userFlow = new List<FlowItem>();
+            foreach (var flowItem in _ctx.FlowItems) {
+                if (flowItem.CanBeSeenBy.Contains(userId.ToString())) {
+                    userFlow.Add(flowItem);
+                }
+            }
+            return userFlow;
+        }
 
-        public void UpdateFlow()
-        {
-
+        public void UpdateFlow(FlowItem flowItemDto) {
+            var flowItem = _ctx.Entry(flowItemDto).State = EntityState.Modified;
+            _ctx.SaveChanges();
         }
 
     }
