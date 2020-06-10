@@ -1,15 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using wekezapp.data.DTOs;
 using wekezapp.data.Entities;
+using wekezapp.data.Enums;
 
 namespace wekezapp.business.Contracts {
     public interface IFlowService
     {
         FlowItem GetFlowItem(int flowItemId);
 
-        void AddFlowItem(string body, string[] canBeSeenBy = null, int transactionId = -1);
+        void AddFlowItem(NotificationType notificationType, int transactionId = -1);
 
-        IEnumerable<FlowItem> GetFlow(int userId);
+        IEnumerable<FlowItemDto> GetFlow(int userId);
     }
 }

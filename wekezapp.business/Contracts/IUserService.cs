@@ -19,6 +19,8 @@ namespace wekezapp.business.Contracts {
 
         void UpdateUser(UserDto user);
 
+        bool IsAdmin(int userId);
+
         UserDto Authenticate(string username, string password);
     }
 }

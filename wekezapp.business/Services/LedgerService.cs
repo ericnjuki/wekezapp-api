@@ -16,11 +16,14 @@ namespace wekezapp.business.Services {
         private readonly WekezappContext _ctx;
         private readonly IMapper _mapper;
         private readonly IFlowService _flowService;
+        private readonly IUserService _userService;
+
         //private readonly AtomicProcedures _atoms;
-        public LedgerService(WekezappContext ctx, IMapper mapper, IFlowService flowService) {
+        public LedgerService(WekezappContext ctx, IMapper mapper, IFlowService flowService, IUserService userService) {
             _ctx = ctx;
             _mapper = mapper;
             _flowService = flowService;
+            _userService = userService;
             //_atoms = atoms;
         }
         public void RequestDepositToPersonal(PersonalDeposit transac) {
@@ -28,14 +31,9 @@ namespace wekezapp.business.Services {
             _ctx.PersonalDeposits.Add(transac);
             _ctx.SaveChanges();
 
-            _flowService
-                .AddFlowItem("PersonalDepositAsDepositor",
-                    new string[] { transac.DepositorId.ToString() },
-                    transac.TransactionId);
-            _flowService
-                .AddFlowItem("PersonalDepositAsAdmin",
-                    _ctx.Users.Where(u => u.Role == Role.Admin).Select(u => u.UserId.ToString()).ToArray(),
-                    transac.TransactionId);
+            _flowService.AddFlowItem(NotificationType.PersonalDepositAsDepositor, transac.TransactionId);
+            _flowService.AddFlowItem(NotificationType.PersonalDepositAsAdmin, transac.TransactionId);
+
         }
 
         public void ConfirmDepositToPersonal(int transactionId, int confirmedById) {
@@ -62,6 +60,9 @@ namespace wekezapp.business.Services {
             transac.DateRequested = DateTime.Now;
             _ctx.PersonalWithdrawals.Add(transac);
             _ctx.SaveChanges();
+
+            _flowService.AddFlowItem(NotificationType.PersonalWithdrawalAsWithdrawer, transac.TransactionId);
+            _flowService.AddFlowItem(NotificationType.PersonalWithdrawalAsAdmin, transac.TransactionId);
         }
 
         public void ConfirmWithdrawFromPersonal(int transactionId, int confirmedById) {
@@ -87,6 +88,8 @@ namespace wekezapp.business.Services {
             transac.DateRequested = DateTime.Now;
             _ctx.ChamaWithdrawals.Add(transac);
             _ctx.SaveChanges();
+
+            _flowService.AddFlowItem(NotificationType.DepositToChamaAsAdmin, transac.TransactionId);
         }
 
         public void DepositToChama(int transactionId, int confirmedById) {
@@ -106,12 +109,16 @@ namespace wekezapp.business.Services {
             _ctx.Entry(transac).State = EntityState.Modified;
             _ctx.Documents.Add(depositToChamaDocument);
             _ctx.SaveChanges();
+
+            _flowService.AddFlowItem(NotificationType.DepositToChamaAsAll, transac.TransactionId);
         }
 
         public void RequestWithdrawalFromChama(ChamaDeposit transac) {
             transac.DateRequested = DateTime.Now;
             _ctx.ChamaDeposits.Add(transac);
             _ctx.SaveChanges();
+
+            _flowService.AddFlowItem(NotificationType.WithdrawFromChamaAsAdmin, transac.TransactionId);
         }
 
         public void WithdrawFromChama(int transactionId, int confirmedById) {
@@ -131,12 +138,29 @@ namespace wekezapp.business.Services {
             _ctx.Entry(transac).State = EntityState.Modified;
             _ctx.Documents.Add(withdrawFromChamaDocument);
             _ctx.SaveChanges();
+
+            _flowService.AddFlowItem(NotificationType.WithdrawFromChamaAsAll, transac.TransactionId);
         }
 
         public void CreateContributions() {
             // todo: add to those regular functions
             // find everyone
             // add a contribution transaction for each id as the contributer
+            var everyone = _ctx.Users.ToList();
+            foreach (var user in everyone) {
+                var cont = new Contribution() {
+                    Amount = _ctx.Chamas.First().MinimumContribution,
+                    ContributorId = user.UserId,
+                    DateFirstRequested = DateTime.Now,
+                    DateDue = _ctx.Chamas.First().Period == Period.Weekly ?
+                        DateTime.Now.AddDays(7) :
+                        DateTime.Now.AddMonths(1)
+                };
+                _ctx.Contributions.Add(cont);
+                _flowService.AddFlowItem(NotificationType.ContributionReminder, cont.TransactionId);
+            }
+
+            _ctx.SaveChanges();
         }
 
         public void ContributeToChama(int transactionId) {
@@ -158,6 +182,8 @@ namespace wekezapp.business.Services {
             _ctx.Entry(transac).State = EntityState.Modified;
             _ctx.Documents.Add(contributeToChamaDocument);
             _ctx.SaveChanges();
+
+            _flowService.AddFlowItem(NotificationType.ContributionPayment, transac.TransactionId);
         }
 
         public void DisburseMerryGoRound(int transactionId) {

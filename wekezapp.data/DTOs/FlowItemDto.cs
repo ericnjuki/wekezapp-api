@@ -1,17 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Text;
 using wekezapp.data.Enums;
 
-namespace wekezapp.data.Entities {
-    public class FlowItem {
-        [Key]
+namespace wekezapp.data.DTOs {
+    public class FlowItemDto {
         public int FlowItemId { get; set; }
-
-        public NotificationType NotificationType { get; set; }
-
-        public int TransactionId { get; set; }
 
         public string Body { get; set; }
 
@@ -21,9 +15,6 @@ namespace wekezapp.data.Entities {
 
         public bool IsConfirmed { get; set; }
 
-        public string[] CanBeSeenBy { get; set; }
-
         public string[] HasBeenSeenBy { get; set; }
-
     }
 }

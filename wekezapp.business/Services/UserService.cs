@@ -141,6 +141,17 @@ namespace wekezapp.business.Services {
             _ctx.SaveChanges();
         }
 
+        public bool IsAdmin(int userId) {
+            var user = _ctx.Users.Find(userId);
+            if (user == null) {
+                throw new ArgumentNullException($"user of userId {userId} does not exist");
+            }
+            if (user.Role == Role.Admin) {
+                return true;
+            }
+            return false;
+        }
+
         public UserDto Authenticate(String email, String password) {
             if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
                 return null;
