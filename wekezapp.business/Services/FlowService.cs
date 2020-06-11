@@ -131,8 +131,76 @@ namespace wekezapp.business.Services {
                 case NotificationType.ContributionPayment:
                     var contributionAfterPayment = _ctx.Contributions.Find(transactionId);
                     canBeSeenBy = new string[] { contributionAfterPayment.ContributorId.ToString() };
-                    body = $"You paid chama contribution on {contributionAfterPayment.DateClosed.ToShortDateString()}";
+                    body = $"You paid chama contribution of Ksh. {contributionAfterPayment.Amount} on {contributionAfterPayment.DateClosed.ToShortDateString()}";
                     break;
+
+                case NotificationType.MerryGoRoundDisbursementAsReceipient:
+                    var mgr = _ctx.MerryGoRounds.Find(transactionId);
+                    canBeSeenBy = new string[] { mgr.ReceiverId.ToString() };
+                    body = $"You received regular disbursment of Ksh. {mgr.Amount} on {mgr.DateClosed.ToShortDateString()}";
+                    break;
+
+                case NotificationType.MerryGoRoundDisbursementAsAll:
+                    var mgrAll = _ctx.MerryGoRounds.Find(transactionId);
+                    canBeSeenBy = _ctx.Users.Select(u => u.UserId.ToString()).ToArray();
+                    body = $"{_ctx.Users.Find(mgrAll.ReceiverId).FirstName} received regular disbursment of Ksh. {mgrAll.Amount} on {mgrAll.DateClosed.ToShortDateString()}";
+                    break;
+
+                case NotificationType.LoanRequestAsRequester:
+                    var loanRequestAsRequester = _ctx.Loans.Find(transactionId);
+                    canBeSeenBy = new string[] {loanRequestAsRequester.ReceiverId.ToString()};
+                    body = $"You requested a loan of Ksh. {loanRequestAsRequester.Amount} on {loanRequestAsRequester.DateRequested}";
+                    break;
+
+                case NotificationType.LoanRequestAsAdmin:
+                    var loanRequestAsAdmin = _ctx.Loans.Find(transactionId);
+                    if (_userService.IsAdmin(loanRequestAsAdmin.ReceiverId)) {
+                        if (_ctx.Users.Count(u => u.Role == Role.Admin || u.Role == Role.Treasurer) > 1) {
+                            canBeSeenBy = _ctx.Users
+                                .Where(u => u.Role == Role.Admin && u.UserId != loanRequestAsAdmin.ReceiverId)
+                                .Select(u => u.UserId.ToString()).ToArray();
+                            body = $"{_ctx.Users.Find(loanRequestAsAdmin.ReceiverId).FirstName} requested loan of {loanRequestAsAdmin.Amount} from the chama account";
+                        } else {
+                            canBeSeenBy = new string[] { loanRequestAsAdmin.ReceiverId.ToString() };
+                            body = $"You requested a loan of {loanRequestAsAdmin.Amount} from the chama account";
+                        }
+                    }
+                    break;
+
+                case NotificationType.LoanDisbursmentAsRequester:
+                    var loanDisbursmentAsRequester = _ctx.Loans.Find(transactionId);
+                    canBeSeenBy = new string[] { loanDisbursmentAsRequester.ReceiverId.ToString() };
+                    body = $"Your loan of Ksh. {loanDisbursmentAsRequester.Amount} has been approved by {loanDisbursmentAsRequester.EvaluatedBy}. The amount has been deposited to your account";
+                    break;
+
+                case NotificationType.LoanDisbursmentAsAll:
+                    var loanDisbursmentAsAll = _ctx.Loans.Find(transactionId);
+                    canBeSeenBy = new string[] { loanDisbursmentAsAll.ReceiverId.ToString() };
+                    body = $"{_ctx.Users.Find(loanDisbursmentAsAll.ReceiverId).FirstName}'s loan of Ksh. {loanDisbursmentAsAll.Amount} was approved on {loanDisbursmentAsAll.DateIssued}";
+                    break;
+
+                case NotificationType.LoanRepayment:
+                    var loanRepayment = _ctx.Documents.Find(transactionId);
+                    var loan = _ctx.Loans.Find(loanRepayment.Transaction.TransactionId);
+
+                    canBeSeenBy = new string[] {loan.ReceiverId.ToString()};
+                    body = $"You made a payment of Ksh. {loanRepayment.Amount} towards your loan. ";
+
+                    body += loan.IsClosed ? "Your loan is now fully repaid" : $"Amount payable remaining is {loan.AmountPayable - loan.AmountPaidSoFar}";
+                    break;
+
+                case NotificationType.LoanFineApplication:
+                    var fineDocument = _ctx.Documents.Find(transactionId);
+                    var loanToBeFined = _ctx.Loans.Find(fineDocument.Transaction.TransactionId);
+
+                    canBeSeenBy = new string[] {loanToBeFined.ReceiverId.ToString()};
+                    body = $"A fine of Ksh. {fineDocument.Amount} has been applied to your loan on {fineDocument.TransactionDate}. New amont payable is {loanToBeFined.AmountPayable - loanToBeFined.AmountPaidSoFar}";
+                    break;
+
+                case NotificationType.Payout:
+                       
+                    break;
+
                 default:
                     canBeSeenBy = _ctx.Users.Select(u => u.UserId.ToString()).ToArray();
                     break;

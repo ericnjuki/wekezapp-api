@@ -14,12 +14,14 @@ namespace wekezapp.data.Enums {
         WithdrawFromChamaAsAll,
         LoanRequestAsRequester,
         LoanRequestAsAdmin,
-        LoanRepaymentAsPayer,
-        LoanRepaymentAsAdmin,
+        LoanDisbursmentAsRequester,
+        LoanDisbursmentAsAll,
+        LoanRepayment,
         LoanFineApplication,
         ContributionPayment,
         ContributionReminder,
-        MerryGoRoundDisbursement,
+        MerryGoRoundDisbursementAsReceipient,
+        MerryGoRoundDisbursementAsAll,
         Payout
     }
 }

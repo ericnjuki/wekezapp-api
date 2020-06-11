@@ -17,7 +17,7 @@ namespace wekezapp.data.Entities.Transactions {
 
         public bool IsReversal { get; set; }
 
-        //public float Amount { get; set; }
+        public float Amount { get; set; }
 
         //public DateTime RequestedDate { get; set; }
 

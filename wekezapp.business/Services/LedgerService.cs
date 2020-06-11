@@ -187,8 +187,10 @@ namespace wekezapp.business.Services {
         }
 
         public void DisburseMerryGoRound(int transactionId) {
-            // todo: add to those regular functions, but add it so that it is always done, unless an
-            // admin says it to not be done, maybe they wanna skip MGR for a while
+            // todo: add to those regular functions, but add it so that it is always done, unless an...
+            // todo: ...admin says it to not be done, maybe they wanna skip MGR for a while
+            // todo: in the regular func.s, is where we'll add flow item every week reminding admin that..
+            // todo: ...an MGR will take place
             // todo: check if balance suffices? (oh, wait, that's in atomic procedures, nvm)
             var transac = _ctx.Contributions.Find(transactionId);
             Document merryGoRoundDocument = new Document {
