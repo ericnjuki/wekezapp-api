@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using wekezapp.data.Persistence;
 
 namespace wekezapp.data.Migrations
 {
     [DbContext(typeof(WekezappContext))]
-    partial class WekezappContextModelSnapshot : ModelSnapshot
+    [Migration("20200701123858_ChamaMGRDetails")]
+    partial class ChamaMGRDetails
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -196,9 +198,6 @@ namespace wekezapp.data.Migrations
                 {
                     b.HasBaseType("wekezapp.data.Entities.Transactions.Transaction");
 
-                    b.Property<float>("AmountPaidSoFar")
-                        .HasColumnName("AmountPaidSoFar");
-
                     b.Property<int>("ContributorId");
 
                     b.Property<DateTime>("DateDue")
@@ -227,8 +226,7 @@ namespace wekezapp.data.Migrations
                 {
                     b.HasBaseType("wekezapp.data.Entities.Transactions.Transaction");
 
-                    b.Property<float>("AmountPaidSoFar")
-                        .HasColumnName("AmountPaidSoFar");
+                    b.Property<float>("AmountPaidSoFar");
 
                     b.Property<float>("AmountPayable");
 

@@ -1,15 +1,15 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Microsoft.EntityFrameworkCore;
 using wekezapp.business.Contracts;
 using wekezapp.data.DTOs;
 using wekezapp.data.Entities;
+using wekezapp.data.Enums;
 using wekezapp.data.Persistence;
 
 namespace wekezapp.core.Controllers {
@@ -55,11 +55,21 @@ namespace wekezapp.core.Controllers {
             return Ok(user);
         }
 
+
         // GET: api/Users/getFlow
         [HttpGet("getFlow")]
         public ActionResult<ICollection<FlowItem>> GetFlow(int userId) {
             try {
                 return Ok(_flowService.GetFlow(userId));
+            } catch (Exception e) {
+                return StatusCode(StatusCodes.Status500InternalServerError, e);
+            }
+        }
+
+        [HttpGet("getFlowOfType")]
+        public ActionResult<ICollection<FlowItem>> GetFlowOfType(int userId, NotificationType notificationType) {
+            try {
+                return Ok(_flowService.GetFlowOfType(userId, notificationType));
             } catch (Exception e) {
                 return StatusCode(StatusCodes.Status500InternalServerError, e);
             }
@@ -90,13 +100,13 @@ namespace wekezapp.core.Controllers {
         }
 
         [HttpPost(), Route("addBulk")]
-        public IActionResult RegisterMany(ICollection<UserDto> users) {
+        public IActionResult RegisterMany(ICollection<UserDto> users, int addedBy) {
             try {
                 if (users.Count == 0) {
                     return BadRequest("No members to add!");
                 }
 
-                _userService.AddUsersBulk(users);
+                _userService.AddUsersBulk(users, addedBy);
                 return Ok();
             } catch (ArgumentNullException ex) {
                 return BadRequest(ex);
@@ -120,26 +130,38 @@ namespace wekezapp.core.Controllers {
             }
         }
 
-        // PUT: api/Users/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser(int id, User user) {
-            if (id != user.UserId) {
-                return BadRequest();
-            }
-
-            _context.Entry(user).State = EntityState.Modified;
-
+        [HttpGet, Route("sendRecoveryCode/{email}")]
+        public IActionResult SendRecoveryCode(string email) {
             try {
-                await _context.SaveChangesAsync();
-            } catch (DbUpdateConcurrencyException) {
-                if (!UserExists(id)) {
-                    return NotFound();
-                } else {
-                    throw;
-                }
+                _userService.SendRecoveryCode(email);
+                return Ok("Check email for recovery code and enter it below");
+
+            } catch (Exception e) {
+                return BadRequest(e.Message);
+            }
+        }
+
+        [HttpGet, Route("recover/{email}/{code}")]
+        public IActionResult Recover(string email, string code) {
+            try {
+                _userService.Recover(email, code);
+                return Ok("New password sent to email");
+
+            } catch (Exception e) {
+                return BadRequest(e.Message);
+            }
+        }
+
+        // PUT: api/Users/5
+        [HttpPut]
+        public IActionResult PutUser(UserDto user) {
+            try {
+                _userService.UpdateUser(user);
+            } catch (Exception ex) {
+                return NotFound(ex.Message);
             }
 
-            return NoContent();
+            return Ok("user updated successfully");
         }
 
         // POST: api/Users

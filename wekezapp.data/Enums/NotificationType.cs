@@ -22,6 +22,9 @@ namespace wekezapp.data.Enums {
         ContributionReminder,
         MerryGoRoundDisbursementAsReceipient,
         MerryGoRoundDisbursementAsAll,
-        Payout
+        PayoutAsReceiver,
+        PayoutAsAdmin,
+        Announcement,
+        All
     }
 }

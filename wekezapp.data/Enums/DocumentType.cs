@@ -17,6 +17,8 @@ namespace wekezapp.data.Enums {
         ContributionPayment, // from personal to chama
         MerryGoRoundDisbursment, // from chama to personal
 
+        ExecutiveEdit
+
         // reversals
         // I wanted to add reversals here as types
         // But i decided a better model would be to use the above types to fulfill reversals

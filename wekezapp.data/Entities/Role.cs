@@ -9,5 +9,7 @@ namespace wekezapp.data.Entities {
         public const string Treasurer = "Treasurer";
 
         public const string Member = "Member";
+
+        public const string Secretary = "Secretary";
     }
 }

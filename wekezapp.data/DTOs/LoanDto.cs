@@ -1,36 +1,37 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
-using wekezapp.data.Entities.Transactions;
 
-namespace wekezapp.data.Entities.Transactions {
-    public class Loan : Transaction {
-        [Column("ReceiverId")]
+namespace wekezapp.data.DTOs {
+    public class LoanDto {
+        public int TransactionId { get; set; }
+
+        public float Amount { get; set; }
+
+        public bool IsClosed { get; set; }
+
+        public DateTime DateClosed { get; set; }
+
         public int ReceiverId { get; set; }
 
-        [Column("DateRequested")]
         public DateTime DateRequested { get; set; }
 
-        public bool Approved { get; set; } // a loan *can* be rejected
+        public bool Approved { get; set; }
 
         public int EvaluatedBy { get; set; } // admin who approves or rejects
 
         public DateTime DateIssued { get; set; }
 
-        [Column("DateDue")]
         public DateTime DateDue { get; set; }
 
         public float InterestRate { get; set; }
 
         public float AmountPayable { get; set; }
 
-        [Column("AmountPaidSoFar")]
         public float AmountPaidSoFar { get; set; }
 
         public float LatePaymentFine { get; set; }
 
         public bool IsDefaulted { get; set; }
-
     }
 }

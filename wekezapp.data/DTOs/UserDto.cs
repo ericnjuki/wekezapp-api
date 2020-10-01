@@ -18,7 +18,14 @@ namespace wekezapp.data.DTOs {
 
         public string Token { get; set; }
 
+        public float OutstandingContributions { get; set; }
+
+        public float OutstandingLoans { get; set; }
+
         public double Balance { get; set; }
 
+        public double Stake { get; set; }
+
+        public int UpdatedBy { get; set; }
     }
 }

@@ -6,5 +6,7 @@ using wekezapp.data.Interfaces;
 namespace wekezapp.business.Contracts {
     public interface IEmailService {
         void NewEmail(EmailOptions emailOpts);
+
+        void SendGridMail();
     }
 }

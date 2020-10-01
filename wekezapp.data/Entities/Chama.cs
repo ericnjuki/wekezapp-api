@@ -22,10 +22,18 @@ namespace wekezapp.data.Entities {
 
         public float MinimumContribution { get; set; }
 
+        //public bool ContributionsHalted { get; set; }
+
         [Required]
         public Period Period { get; set; }
 
+        public float MgrAmount { get; set; }
+
         public string[] MgrOrder { get; set; }
+
+        public int NextMgrReceiverIndex { get; set; }
+
+        public DateTime NextMgrDate { get; set; }
 
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
@@ -17,25 +18,36 @@ namespace wekezapp.core.Controllers {
     [ApiController]
     public class ChamaController : ControllerBase {
         private readonly IChamaService _chamaService;
+        private readonly IUserService _userService;
+        private readonly IMapper _mapper;
 
-        public ChamaController(IChamaService chamaService) {
+        public ChamaController(IChamaService chamaService, IUserService userService, IMapper mapper) {
             _chamaService = chamaService;
+            _userService = userService;
+            _mapper = mapper;
         }
 
         // GET: api/chama
         [HttpGet]
-        public ActionResult<ChamaDto> GetChama() {
+        public ActionResult<Chama> GetChama() {
             var chama = _chamaService.GetChama();
 
             if (chama == null) {
                 return NotFound();
             }
-            return Ok(chama);
+            var users = _userService.GetAllUsers();
+            float totalOwed = 0;
+            foreach (var user in users) {
+                totalOwed += user.OutstandingContributions + user.OutstandingLoans;
+            }
+            ChamaDto chamaDto = _mapper.Map<ChamaDto>(chama);
+            chamaDto.TotalOwed = totalOwed;
+            return Ok(chamaDto);
         }
 
 
         [HttpPost, Route("add")]
-        public IActionResult Register(ChamaDto chama) {
+        public IActionResult Register(Chama chama) {
             try {
                 _chamaService.AddChama(chama);
                 return Ok("success");
@@ -47,7 +59,7 @@ namespace wekezapp.core.Controllers {
 
         // PUT: api/Chama/5
         [HttpPut, Route("update")]
-        public IActionResult UpdateChama(ChamaDto chamaDto) {
+        public IActionResult UpdateChama(Chama chamaDto) {
             try {
                 return Ok(_chamaService.UpdateChama(chamaDto));
             } catch (Exception ex) {
@@ -57,7 +69,7 @@ namespace wekezapp.core.Controllers {
 
         // PUT: api/Chama/5
         [HttpPut("{id}")]
-        public IActionResult PutChama(ChamaDto chamaDto) {
+        public IActionResult PutChama(Chama chamaDto) {
             try {
                 _chamaService.UpdateChama(chamaDto);
             } catch (Exception ex) {
@@ -77,6 +89,11 @@ namespace wekezapp.core.Controllers {
                 return StatusCode(StatusCodes.Status500InternalServerError, ex);
             }
             return NoContent();
+        }
+
+        [HttpGet("isContributionsDay")]
+        public ActionResult IsContributionsDay() {
+            return Ok(_chamaService.IsContributionsDay());
         }
     }
 }

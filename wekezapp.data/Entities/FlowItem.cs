@@ -17,9 +17,13 @@ namespace wekezapp.data.Entities {
 
         public DateTime DateCreated { get; set; }
 
+        public DateTime DateModified { get; set; }
+
         public bool IsConfirmable { get; set; }
 
         public bool IsConfirmed { get; set; }
+
+        public bool IsForAll { get; set; }
 
         public string[] CanBeSeenBy { get; set; }
 

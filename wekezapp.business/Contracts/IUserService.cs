@@ -15,12 +15,16 @@ namespace wekezapp.business.Contracts {
 
         void AddAdmin(UserDto user);
 
-        void AddUsersBulk(ICollection<UserDto> users);
+        void AddUsersBulk(ICollection<UserDto> users, int addedBy);
 
         void UpdateUser(UserDto user);
 
         bool IsAdmin(int userId);
 
         UserDto Authenticate(string username, string password);
+
+        void SendRecoveryCode(string email);
+
+        void Recover(string email, string code);
     }
 }

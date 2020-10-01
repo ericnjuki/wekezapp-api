@@ -34,6 +34,7 @@ namespace wekezapp.core {
             services.AddTransient<IChamaService, ChamaService>();
             services.AddTransient<IEmailService, EmailService>();
             services.AddTransient<ILedgerService, LedgerService>();
+            services.AddTransient<ILoanService, LoanService>();
             services.AddTransient<IAtomicProcedures, AtomicProcedures>();
 
             // set up DB

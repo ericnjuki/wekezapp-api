@@ -13,39 +13,38 @@ namespace wekezapp.business.Services {
     public class ChamaService : IChamaService {
         private readonly WekezappContext _ctx;
         private readonly IMapper _mapper;
+        private readonly IFlowService _flowService;
+
         //private readonly IFlowService _flowService;
 
-        public ChamaService(WekezappContext shopAssist2Context, IMapper mapper) {
+        public ChamaService(WekezappContext shopAssist2Context, IMapper mapper, IFlowService flowService) {
             _ctx = shopAssist2Context;
             _mapper = mapper;
+            _flowService = flowService;
         }
-        public ChamaDto GetChama() {
-            return _mapper.Map<ChamaDto>(_ctx.Chamas.FirstOrDefault());
+        public Chama GetChama() {
+            return _ctx.Chamas.FirstOrDefault();
         }
 
-        public void AddChama(ChamaDto chamaDto) {
+        public void AddChama(Chama chamaDto) {
             if (chamaDto == null)
                 throw new ArgumentNullException(nameof(chamaDto));
 
             if (string.IsNullOrWhiteSpace(chamaDto.ChamaName))
                 chamaDto.ChamaName = "NewChama";
 
-            var chama = _mapper.Map<Chama>(chamaDto);
-
-            _ctx.Chamas.Add(chama);
+            _ctx.Chamas.Add(chamaDto);
             _ctx.SaveChanges();
 
-            //var notifBody = $"{_ctx.Users.Single(u => u.Role == Role.Admin).FirstName} created chama {chama.ChamaName}";
-            //_flowService.AddFlowItem(notifBody);
+            var notifBody = $"{_ctx.Users.Single(u => u.Role == Role.Admin).FirstName} created chama {chamaDto.ChamaName}";
+            _flowService.AddFlowItem(NotificationType.Announcement, -1, notifBody);
 
         }
 
-        public ChamaDto UpdateChama(ChamaDto chamaDto) {
-            var updatedChama = _mapper.Map<Chama>(chamaDto);
-
-            _ctx.Entry(updatedChama).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
+        public Chama UpdateChama(Chama chamaDto) {
+            _ctx.Entry(chamaDto).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
             _ctx.SaveChanges();
-            return _mapper.Map<ChamaDto>(_ctx.Chamas.FirstOrDefault());
+            return _ctx.Chamas.FirstOrDefault();
         }
 
         public void DeleteChama(int chamaId) {
@@ -54,5 +53,9 @@ namespace wekezapp.business.Services {
             _ctx.SaveChanges();
         }
 
+        public bool IsContributionsDay() {
+            var chama = _ctx.Chamas.First();
+            return chama.NextMgrDate <= DateTime.Now ? true : false;
+        }
     }
 }

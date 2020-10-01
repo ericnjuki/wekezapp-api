@@ -2,16 +2,19 @@
 using System.Collections.Generic;
 using System.Text;
 using wekezapp.data.DTOs;
+using wekezapp.data.Entities;
 
 namespace wekezapp.business.Contracts {
     public interface IChamaService {
-        ChamaDto GetChama();
+        Chama GetChama();
 
-        void AddChama(ChamaDto chamaDto);
+        void AddChama(Chama chamaDto);
 
-        ChamaDto UpdateChama(ChamaDto chamaDto);
+        Chama UpdateChama(Chama chamaDto);
 
         void DeleteChama(int chamaId);
+
+        bool IsContributionsDay();
 
     }
 }

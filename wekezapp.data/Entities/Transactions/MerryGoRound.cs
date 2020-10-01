@@ -11,5 +11,6 @@ namespace wekezapp.data.Entities.Transactions {
 
         [Column("DateDue")]
         public DateTime DateDue { get; set; }
+
     }
 }

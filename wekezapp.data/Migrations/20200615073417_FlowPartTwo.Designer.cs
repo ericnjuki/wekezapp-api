@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using wekezapp.data.Persistence;
 
 namespace wekezapp.data.Migrations
 {
     [DbContext(typeof(WekezappContext))]
-    partial class WekezappContextModelSnapshot : ModelSnapshot
+    [Migration("20200615073417_FlowPartTwo")]
+    partial class FlowPartTwo
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -34,15 +36,9 @@ namespace wekezapp.data.Migrations
 
                     b.Property<float>("LoanInterestRate");
 
-                    b.Property<float>("MgrAmount");
-
                     b.Property<string>("MgrOrder");
 
                     b.Property<float>("MinimumContribution");
-
-                    b.Property<DateTime>("NextMgrDate");
-
-                    b.Property<int>("NextMgrReceiverIndex");
 
                     b.Property<int>("Period");
 
@@ -70,8 +66,6 @@ namespace wekezapp.data.Migrations
                     b.Property<bool>("IsConfirmable");
 
                     b.Property<bool>("IsConfirmed");
-
-                    b.Property<bool>("IsForAll");
 
                     b.Property<int>("NotificationType");
 
@@ -196,9 +190,6 @@ namespace wekezapp.data.Migrations
                 {
                     b.HasBaseType("wekezapp.data.Entities.Transactions.Transaction");
 
-                    b.Property<float>("AmountPaidSoFar")
-                        .HasColumnName("AmountPaidSoFar");
-
                     b.Property<int>("ContributorId");
 
                     b.Property<DateTime>("DateDue")
@@ -227,8 +218,7 @@ namespace wekezapp.data.Migrations
                 {
                     b.HasBaseType("wekezapp.data.Entities.Transactions.Transaction");
 
-                    b.Property<float>("AmountPaidSoFar")
-                        .HasColumnName("AmountPaidSoFar");
+                    b.Property<float>("AmountPaidSoFar");
 
                     b.Property<float>("AmountPayable");
 

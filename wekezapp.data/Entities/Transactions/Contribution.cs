@@ -12,5 +12,8 @@ namespace wekezapp.data.Entities.Transactions {
 
         [Column("DateRequested")]
         public DateTime DateFirstRequested { get; set; } // may not need  you, same as DateClosed?
+
+        [Column("AmountPaidSoFar")]
+        public float AmountPaidSoFar { get; set; }
     }
 }

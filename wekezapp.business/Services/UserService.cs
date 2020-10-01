@@ -7,10 +7,12 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using wekezapp.business.Contracts;
 using wekezapp.data.DTOs;
 using wekezapp.data.Entities;
+using wekezapp.data.Entities.Transactions;
 using wekezapp.data.Enums;
 using wekezapp.data.Interfaces;
 using wekezapp.data.Persistence;
@@ -20,24 +22,33 @@ namespace wekezapp.business.Services {
         private readonly WekezappContext _ctx;
         private readonly IMapper _mapper;
         private readonly IEmailService _emailService;
+        private readonly IFlowService _flowService;
+        private static Random random = new Random();
 
-        public UserService(WekezappContext shopAssist2Context, IMapper mapper, IEmailService emailService) {
+        public UserService(WekezappContext shopAssist2Context, IMapper mapper, IEmailService emailService, IFlowService flowService) {
             _ctx = shopAssist2Context;
             _mapper = mapper;
             _emailService = emailService;
+            _flowService = flowService;
         }
         public UserDto GetUserById(int userId) {
-            var user = _ctx.Users.FirstOrDefault();
-            return user == null ? null : _mapper.Map<UserDto>(user);
+            var user = _ctx.Users.Find(userId);
+            if (user == null) return null;
+            var userDto = _mapper.Map<UserDto>(user);
+            userDto = GetOutstandingLoans(GetOutstandingContributions(userDto));
+            return userDto;
         }
 
         public UserDto GetUserByEmail(string email) {
             var user = _ctx.Users.FirstOrDefault(x => x.Email == email);
-            return user == null ? null : _mapper.Map<UserDto>(user);
+            if (user == null) return null;
+            var userDto = _mapper.Map<UserDto>(user);
+            userDto = GetOutstandingLoans(GetOutstandingContributions(userDto));
+            return userDto;
         }
 
         public IEnumerable<UserDto> GetAllUsers() {
-            return _ctx.Users.ToList().Select(u => _mapper.Map<UserDto>(u));
+            return _ctx.Users.ToList().Select(u => GetOutstandingContributions(GetOutstandingLoans(_mapper.Map<UserDto>(u))));
         }
 
         public void AddAdmin(UserDto userDto) {
@@ -68,7 +79,7 @@ namespace wekezapp.business.Services {
             _ctx.SaveChanges();
         }
 
-        public void AddUsersBulk(ICollection<UserDto> userDtos) {
+        public void AddUsersBulk(ICollection<UserDto> userDtos, int addedBy) {
             foreach (var userDto in userDtos) {
 
                 if (userDto == null)
@@ -104,29 +115,121 @@ namespace wekezapp.business.Services {
                     + $"\nPassword: {userDto.Password}"
                     + "\nFor any information please contact your chama chairperson"
                 };
-                _emailService.NewEmail(emailOpts);
+                //_emailService.NewEmail(emailOpts);
 
                 CreatePasswordHash(userDto.Password, out var passwordHash, out var passwordSalt);
                 user.PasswordHash = passwordHash;
                 user.PasswordSalt = passwordSalt;
 
                 _ctx.Users.Add(user);
+
+                // notification
+                var newMemberNotif = $"You were added to chama {_ctx.Chamas.FirstOrDefault()?.ChamaName}";
+
+                if (user.Role != Role.Member) {
+                    newMemberNotif = $"You were added as {user.Role} to chama {_ctx.Chamas.FirstOrDefault()?.ChamaName}";
+                }
+                _ctx.SaveChanges();
+                _flowService.AddFlowItem(NotificationType.Announcement, -1, newMemberNotif, new string[] { $"{user.UserId}" });
+
+                // update previous flowItems that are viewable by everyone to include this one
+                var pastItems = _ctx.FlowItems.ToList();
+                foreach (var pastItem in pastItems) {
+                    if (pastItem.IsForAll) {
+                        var newCanBeSeenBy = pastItem.CanBeSeenBy;
+
+                        Array.Resize(ref newCanBeSeenBy, newCanBeSeenBy.Length + 1);
+                        newCanBeSeenBy[newCanBeSeenBy.GetUpperBound(0)] = user.UserId.ToString();
+
+                        pastItem.CanBeSeenBy = newCanBeSeenBy;
+                        _ctx.Entry(pastItem).State = EntityState.Modified;
+                    }
+                }
+
+                // update mgr order
+                var chama = _ctx.Chamas.First();
+                var newMgrOrder = chama.MgrOrder;
+
+                if(newMgrOrder != null) {
+                    Array.Resize(ref newMgrOrder, newMgrOrder.Length + 1);
+                    newMgrOrder[newMgrOrder.GetUpperBound(0)] = user.UserId.ToString();
+
+                    chama.MgrOrder = newMgrOrder;
+                    _ctx.Entry(chama).State = EntityState.Modified;
+                }
+
+                _ctx.SaveChanges();
             }
-            _ctx.SaveChanges();
 
-            //foreach (var user in _ctx.Users) {
-            //    var newMemberNotif = $"You were added to chama {_ctx.Chamas.FirstOrDefault()?.ChamaName}";
 
-            //    if (user.Role != Role.Member) {
-            //        newMemberNotif = $"You were added as {user.Role} to chama {_ctx.Chamas.FirstOrDefault()?.ChamaName}";
-            //    }
-            //    _flowService.AddFlowItem(newMemberNotif, new List<int>(user.UserId));
-            //}
+            var newPeopleAnnouncement = $"{_ctx.Users.Find(addedBy).FirstName} added {userDtos.Count} new members to the chama";
+            _flowService.AddFlowItem(NotificationType.Announcement, -1, newPeopleAnnouncement);
         }
 
         public void UpdateUser(UserDto userDto) {
-            _ctx.Users.Find(userDto.UserId);
-            var user = _mapper.Map<User>(userDto);
+            var user = _ctx.Users.Find(userDto.UserId);
+            var updater = _ctx.Users.Find(userDto.UpdatedBy);
+            var originalBalace = user.Balance;
+            var balanceDifference = user.Balance - userDto.Balance;
+            var now = DateTime.Now;
+
+            if (user.Balance != userDto.Balance) {
+                Document executiveEditDocument = new Document() {
+                    Amount = (float)(balanceDifference < 0 ? -balanceDifference : balanceDifference),
+                    DocumentType = DocumentType.ExecutiveEdit,
+                    TransactionDate = now
+                };
+
+                if (balanceDifference > 0) {
+                    PersonalWithdrawal personalWithdrawal = new PersonalWithdrawal() {
+                        Amount = Math.Abs((float)balanceDifference),
+                        WithdrawerId = user.UserId,
+                        IsClosed = true
+                    };
+                    personalWithdrawal.DateRequested = personalWithdrawal.DateClosed = now;
+                    _ctx.Add(personalWithdrawal);
+                    _ctx.SaveChanges();
+
+                    executiveEditDocument.Transaction = personalWithdrawal;
+                    executiveEditDocument.CreditFrom = user.UserId;
+                    executiveEditDocument.TransactionId = personalWithdrawal.TransactionId;
+
+                    _ctx.Add(executiveEditDocument);
+                } else {
+                    PersonalDeposit personalDeposit = new PersonalDeposit() {
+                        Amount = Math.Abs((float)balanceDifference),
+                        DepositorId = user.UserId,
+                        IsClosed = true
+                    };
+                    personalDeposit.DateClosed = personalDeposit.DateRequested = now;
+                    _ctx.Add(personalDeposit);
+                    _ctx.SaveChanges();
+
+                    executiveEditDocument.Transaction = personalDeposit;
+                    executiveEditDocument.DebitTo = user.UserId;
+                    executiveEditDocument.TransactionId = personalDeposit.TransactionId;
+
+                    _ctx.Add(executiveEditDocument);
+                }
+
+                var message = $"Your account balance was edited from {originalBalace} to {userDto.Balance} by admin. Contact admin for further details";
+                if (updater != null) {
+                    message = $"Your account balance was edited from {originalBalace} to {userDto.Balance} by {updater.FirstName}";
+                }
+                
+                _flowService.AddFlowItem(NotificationType.Announcement, executiveEditDocument.Transaction.TransactionId, message, new string[] { user.UserId.ToString() });
+            }
+
+            user.UserId = user.UserId;
+            user.PasswordHash = user.PasswordHash;
+            user.PasswordSalt = user.PasswordSalt;
+            user.Token = user.Token;
+            user.Balance = userDto.Balance;
+            user.Email = userDto.Email;
+            user.FirstName = userDto.FirstName;
+            user.Role = userDto.Role;
+            user.SecondName = userDto.SecondName;
+            user.Stake = userDto.Stake;
 
             if (!string.IsNullOrWhiteSpace(userDto.Password)) {
                 CreatePasswordHash(userDto.Password, out var passwordHash, out var passwordSalt);
@@ -137,8 +240,30 @@ namespace wekezapp.business.Services {
 
             // TODO: Update The Ledger with amount
 
-            _ctx.Entry(user).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
+            _ctx.Entry(user).State = EntityState.Modified;
             _ctx.SaveChanges();
+        }
+
+        UserDto GetOutstandingContributions(UserDto userDto) {
+            //var x = _ctx.Contributions.ToList();
+
+            userDto.OutstandingContributions = _ctx.Contributions
+                .Where(c => c.ContributorId == userDto.UserId)
+                .Where(c => c.IsClosed == false)
+                .Select(c => c).Sum(c => c.Amount - c.AmountPaidSoFar);
+
+            return userDto;
+        }
+
+        UserDto GetOutstandingLoans(UserDto userDto) {
+
+            userDto.OutstandingLoans = _ctx.Loans
+                .Where(l => l.ReceiverId == userDto.UserId)
+                .Where(l => l.Approved)
+                .Where(l => l.IsClosed == false)
+                .Select(l => l).Sum(l => l.AmountPayable - l.AmountPaidSoFar);
+
+            return userDto;
         }
 
         public bool IsAdmin(int userId) {
@@ -167,8 +292,46 @@ namespace wekezapp.business.Services {
                 return null;
 
             // authentication successful, now generate token
-
             return GenerateToken(_mapper.Map<UserDto>(user));
+        }
+
+        public void SendRecoveryCode(string email) {
+            this._emailService.SendGridMail();
+            //if (string.IsNullOrEmpty(email))
+            //    throw new Exception("Email does not exist");
+
+            //var user = _ctx.Users.FirstOrDefault(x => x.Email == email);
+
+            //var length = 6;
+            //const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            //var code = new string(Enumerable.Repeat(chars, length)
+            //  .Select(s => s[random.Next(s.Length)]).ToArray());
+
+            //user.Token = code;
+            //_ctx.Entry(user).State = EntityState.Modified;
+            //_ctx.SaveChanges();
+
+            // TODO: send code to email ("If you initiated the recovery process
+            // "please enter the code below to continue, otherwise, ignore it")
+        }
+
+        public void Recover(string email, string code) {
+            if (string.IsNullOrEmpty(email))
+                throw new Exception("Email does not exist");
+
+            var user = _ctx.Users.FirstOrDefault(x => x.Email == email);
+            if (code == user.Token) {
+                CreatePasswordHash("NewSecurePassword123", out var passwordHash, out var passwordSalt);
+                user.PasswordHash = passwordHash;
+                user.PasswordSalt = passwordSalt;
+
+                _ctx.Entry(user).State = EntityState.Modified;
+                _ctx.SaveChanges();
+            } else {
+                throw new Exception("Invalid Code");
+            }
+
+            // TODO: send email ("your new password is NewSecurePassword123")
         }
 
         public void SendEmail(User user, EmailOptions emailOptions) {
@@ -212,7 +375,8 @@ namespace wekezapp.business.Services {
                 {
                     new Claim(nameof(userDto.UserId), userDto.UserId.ToString()),
                     new Claim(nameof(userDto.Email), userDto.Email),
-                    new Claim(nameof(Role), userDto.Role)
+                    new Claim(nameof(userDto.FirstName), userDto.FirstName),
+                    new Claim(nameof(Role), userDto.Role),
                 }),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
@@ -221,6 +385,7 @@ namespace wekezapp.business.Services {
 
             userDto.Password = "";
             userDto.Token = tokenString;
+            userDto = GetOutstandingLoans(GetOutstandingContributions(userDto));
 
             // save token to db
             var ctxUser = _ctx.Users.FirstOrDefault(u => u.UserId == userDto.UserId);

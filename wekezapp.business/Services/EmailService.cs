@@ -5,6 +5,8 @@ using System.Net;
 using System.Net.Mail;
 using wekezapp.business.Contracts;
 using wekezapp.data.Interfaces;
+using SendGrid;
+using SendGrid.Helpers.Mail;
 
 namespace wekezapp.business.Services {
     public class EmailService : IEmailService {
@@ -33,6 +35,22 @@ namespace wekezapp.business.Services {
             }) {
                 smtp.Send(message);
             }
+        }
+
+        public async void SendGridMail() {
+            // if you get a Forbidden response,
+            // go to https://app.sendgrid.com/settings/sender_auth.
+            // In the middle of the page you'll see "Verify Single Sender".
+
+            var apiKey = Environment.GetEnvironmentVariable("SENDGRID_API_KEY");
+            var client = new SendGridClient(apiKey);
+            var from = new EmailAddress("njukieric@gmail.com", "WekezApp");
+            var subject = "WekezApp notification";
+            var to = new EmailAddress("ericnjuki@gmail.com", "Eric Njuki");
+            var plainTextContent = "This is a WekezApp notification.";
+            var htmlContent = "<strong>Thank you for being with us.</strong>";
+            var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
+            var response = await client.SendEmailAsync(msg).ConfigureAwait(false);
         }
     }
 }
