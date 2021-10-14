@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "wekezapp.business": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "SENDER_PW": "nsbgpqgihigbigpz"
+      }
+    }
+  }
+}

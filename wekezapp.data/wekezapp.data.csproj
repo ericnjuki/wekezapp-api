@@ -12,6 +12,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.13.1" />
   </ItemGroup>
 
 </Project>

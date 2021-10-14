@@ -77,6 +77,26 @@ namespace wekezapp.business.Services {
 
             _ctx.Users.Add(user);
             _ctx.SaveChanges();
+
+            var bodyHtml = string.Empty;
+            var bodyText = string.Empty;
+            bodyHtml = bodyText = $@"Hello {user.FirstName}, thank you for creating an account with us.<br>
+                    You've joined Wekezapp as an Admin.<br>
+                    Follow the steps on your portal to create your chama and add new members.
+                       <br><br>
+                       With Wekezapp, you can:
+                        <ul>
+                        <li>Keep track of chama finances</li>
+                        <li>Keep track of personal finances within the chama</li>
+                        <li>Request and pay loans</li>
+                        <li>Disburse regular payments to chama members</li>
+                        <li>Receive regular contributions from chama members</li>
+                        </ul>
+                        <br><br>
+                    <small>If you are not the admin of a chama,
+                    please contact your Chairperson to add you to a chama<small>";
+            //_emailService.SendGridMail(user.Email, "Welcome to Wekezapp!", bodyText, bodyHtml);
+            _emailService.NewEmail(new EmailOptions{ Message = bodyText, Receipient = user.Email }, "Welcome to Wekezapp!");
         }
 
         public void AddUsersBulk(ICollection<UserDto> userDtos, int addedBy) {
@@ -107,15 +127,18 @@ namespace wekezapp.business.Services {
 
                 var user = _mapper.Map<User>(userDto);
 
-                var emailOpts = new EmailOptions() {
-                    Receipient = userDto.Email,
-                    EmailType = EmailType.Welcome,
-                    Message = $"Hi, You've been added as a member to the chama {_ctx.Chamas.FirstOrDefault()?.ChamaName}"
-                    + "\nPlease use this email and the password below to log in"
-                    + $"\nPassword: {userDto.Password}"
-                    + "\nFor any information please contact your chama chairperson"
-                };
-                //_emailService.NewEmail(emailOpts);
+                var bodyHtml = string.Empty;
+                var bodyText = string.Empty;
+
+                bodyHtml = bodyText = $@"Hi, You've been added as a {user.Role} to the chama {_ctx.Chamas.FirstOrDefault()?.ChamaName}<br>
+                    Please use this email and the password below to log in.<br><br>
+
+                    Password: {userDto.Password}<br><br>
+
+                    For any information please contact your chama chairperson.";
+                //_emailService.SendGridMail(user.Email, "Welcome to Wekezapp!", bodyText, bodyHtml);
+                _emailService.NewEmail(new EmailOptions { Message = bodyText, Receipient = user.Email }, "Welcome to Wekezapp!");
+
 
                 CreatePasswordHash(userDto.Password, out var passwordHash, out var passwordSalt);
                 user.PasswordHash = passwordHash;
@@ -212,11 +235,12 @@ namespace wekezapp.business.Services {
                     _ctx.Add(executiveEditDocument);
                 }
 
-                var message = $"Your account balance was edited from {originalBalace} to {userDto.Balance} by admin. Contact admin for further details";
+                var message = string.Empty;
+                message = $"Your account balance was edited from {originalBalace} to {userDto.Balance} by admin. Contact admin for further details";
                 if (updater != null) {
                     message = $"Your account balance was edited from {originalBalace} to {userDto.Balance} by {updater.FirstName}";
                 }
-                
+
                 _flowService.AddFlowItem(NotificationType.Announcement, executiveEditDocument.Transaction.TransactionId, message, new string[] { user.UserId.ToString() });
             }
 
@@ -236,6 +260,14 @@ namespace wekezapp.business.Services {
 
                 user.PasswordHash = passwordHash;
                 user.PasswordSalt = passwordSalt;
+
+                var bodyText = string.Empty;
+                var bodyHtml = string.Empty;
+
+                bodyHtml = bodyText = "Your password was changed successfully";
+                //_emailService.SendGridMail(user.Email, "Password Change", bodyText, bodyHtml);
+                _emailService.NewEmail(new EmailOptions { Message = bodyText, Receipient = user.Email }, "Password Change");
+
             }
 
             // TODO: Update The Ledger with amount
@@ -296,32 +328,44 @@ namespace wekezapp.business.Services {
         }
 
         public void SendRecoveryCode(string email) {
-            this._emailService.SendGridMail();
-            //if (string.IsNullOrEmpty(email))
-            //    throw new Exception("Email does not exist");
+            if (string.IsNullOrEmpty(email))
+                throw new Exception("Email does not exist");
 
-            //var user = _ctx.Users.FirstOrDefault(x => x.Email == email);
+            var user = _ctx.Users.FirstOrDefault(x => x.Email == email);
 
-            //var length = 6;
-            //const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-            //var code = new string(Enumerable.Repeat(chars, length)
-            //  .Select(s => s[random.Next(s.Length)]).ToArray());
+            var length = 6;
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            var code = new string(Enumerable.Repeat(chars, length)
+              .Select(s => s[random.Next(s.Length)]).ToArray());
 
-            //user.Token = code;
-            //_ctx.Entry(user).State = EntityState.Modified;
-            //_ctx.SaveChanges();
+            user.Token = code;
+            _ctx.Entry(user).State = EntityState.Modified;
+            _ctx.SaveChanges();
 
-            // TODO: send code to email ("If you initiated the recovery process
-            // "please enter the code below to continue, otherwise, ignore it")
+            var bodyText = $@"If you initiated the recovery process
+                please enter the code below to continue, otherwise, ignore it: 
+
+                {code}";
+            var bodyHtml = $@"
+                <p>If you initiated the recovery process
+                please enter the code below to continue, otherwise, ignore it
+                </p>
+                <br>
+                <strong>{code}</strong>
+                ";
+            //this._emailService.SendGridMail(user.Email, "Password Recovery Code", bodyText, bodyHtml);
+            this._emailService.NewEmail(new EmailOptions { Message = bodyText, Receipient = user.Email }, "Password Recovery Code");
+
         }
 
         public void Recover(string email, string code) {
+            var newPass = "NewSecurePassword123";
             if (string.IsNullOrEmpty(email))
                 throw new Exception("Email does not exist");
 
             var user = _ctx.Users.FirstOrDefault(x => x.Email == email);
             if (code == user.Token) {
-                CreatePasswordHash("NewSecurePassword123", out var passwordHash, out var passwordSalt);
+                CreatePasswordHash(newPass, out var passwordHash, out var passwordSalt);
                 user.PasswordHash = passwordHash;
                 user.PasswordSalt = passwordSalt;
 
@@ -331,7 +375,19 @@ namespace wekezapp.business.Services {
                 throw new Exception("Invalid Code");
             }
 
-            // TODO: send email ("your new password is NewSecurePassword123")
+            var bodyText = $@"Find your new password below.
+                Please change it as soon as you log in.
+
+                {newPass}";
+            var bodyHtml = $@"
+                <p>Find your new password below.
+                Please change it as soon as you log in.
+                </p>
+                <br>
+                <strong>{newPass}</strong>";
+            //this._emailService.SendGridMail(user.Email, "New Wekezapp Password", bodyText, bodyHtml);
+            this._emailService.NewEmail(new EmailOptions { Message = bodyText, Receipient = user.Email }, "New Wekezapp Password");
+
         }
 
         public void SendEmail(User user, EmailOptions emailOptions) {

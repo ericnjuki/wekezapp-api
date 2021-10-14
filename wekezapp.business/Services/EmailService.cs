@@ -14,11 +14,11 @@ namespace wekezapp.business.Services {
 
         }
 
-        public void NewEmail(EmailOptions emailOpts) {
-            var fromAddress = new MailAddress("njukieric@gmail.com", "Wekezapp Admin");
+        public void NewEmail(EmailOptions emailOpts, string emailSubject) {
+            var fromAddress = new MailAddress("ericnjuki@gmail.com", "Wekezapp Admin");
             var toAddress = new MailAddress(emailOpts.Receipient, "Chama Member");
-            const string fromPassword = "greyskelton";
-            string subject = "Chama Login Credentials";
+            string fromPassword = Environment.GetEnvironmentVariable("SENDER_PW");
+            string subject = emailSubject;
             string body = emailOpts.Message;
 
             var smtp = new SmtpClient {
@@ -37,18 +37,20 @@ namespace wekezapp.business.Services {
             }
         }
 
-        public async void SendGridMail() {
+        public async void SendGridMail(string recipient, string subject, string bodyText, string bodyHtml) {
             // if you get a Forbidden response,
             // go to https://app.sendgrid.com/settings/sender_auth.
             // In the middle of the page you'll see "Verify Single Sender".
 
+            if (string.IsNullOrEmpty(recipient))
+                recipient = "ericnjuki@gmail.com";
+
             var apiKey = Environment.GetEnvironmentVariable("SENDGRID_API_KEY");
             var client = new SendGridClient(apiKey);
             var from = new EmailAddress("njukieric@gmail.com", "WekezApp");
-            var subject = "WekezApp notification";
-            var to = new EmailAddress("ericnjuki@gmail.com", "Eric Njuki");
-            var plainTextContent = "This is a WekezApp notification.";
-            var htmlContent = "<strong>Thank you for being with us.</strong>";
+            var to = new EmailAddress(recipient, "Eric Njuki");
+            var plainTextContent = bodyText;
+            var htmlContent = bodyHtml;
             var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
             var response = await client.SendEmailAsync(msg).ConfigureAwait(false);
         }

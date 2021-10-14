@@ -64,6 +64,8 @@ namespace wekezapp.business.Services {
             _ctx.Entry(transac).State = EntityState.Modified;
             _ctx.Documents.Add(depositToPersonalDocument);
             _ctx.SaveChanges();
+
+            
         }
 
         public void RequestWithdrawalFromPersonal(PersonalWithdrawal transac) {
@@ -101,6 +103,7 @@ namespace wekezapp.business.Services {
             _ctx.Entry(transac).State = EntityState.Modified;
             _ctx.Documents.Add(withdrawFromPersonalDocument);
             _ctx.SaveChanges();
+
         }
 
         public void RequestDepositToChama(ChamaDeposit transac) {
